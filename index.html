@@ -152,7 +152,13 @@ function q(v,x,y,lo,hi){const s=Math.max(0,Math.min(1,v))*8;let i=Math.floor(s);
 
 /* ---------- level: [x, y(top), w, h, tag] in world px, y=0 is the well mouth ---------- */
 const ZL={
-1:[[24,1366,36,8],[110,1318,40,8],[150,1262,44,8],[40,1210,30,8],[118,1156,30,8,'wood'],[76,1040,10,100,'block'],[20,1100,26,8],[122,1000,34,8],[40,950,30,8],[150,890,44,8],[74,876,50,8],[20,800,24,8,'wood'],[120,756,30,8],[60,716,22,8],[158,650,36,8],[100,560,12,100,'block'],[30,590,30,8],[126,540,34,8],[70,490,26,8,'wood'],[20,430,24,8],[150,380,30,8],[90,330,30,8],[160,276,30,8],[40,220,30,8],[110,170,24,8,'wood'],[44,118,26,8],[96,64,44,8]],
+1:[[20,1378,52,8],[100,1340,56,8],[30,1298,50,8],[104,1256,52,8],[24,1214,50,8],
+ [100,1172,48,8],[36,1128,44,8,'wood'],[108,1086,44,8],[44,1040,40,8],[96,996,40,8],
+ [150,950,46,8],[40,906,40,8],[120,862,40,8,'wood'],[10,818,36,8],[100,774,40,8],[160,730,40,8],
+ [40,686,36,8],[110,580,10,90,'block'],[150,640,36,8],[70,594,34,8],[130,548,40,8,'wood'],[30,504,40,8],
+ [110,460,40,8],[70,360,10,90,'block'],[20,416,34,8],[120,372,36,8],[50,326,30,8,'wood'],[140,282,32,8],
+ [60,236,30,8],[150,192,40,8],[40,148,30,8],[150,106,30,8,'wood'],[96,64,44,8]],
+
 2:[[40,1430,32,8],[110,1376,46,8,'moss'],[20,1322,30,8,'moss'],[150,1270,44,8,'moss'],[60,1214,28,8],[118,1160,36,8,'moss'],[30,1100,24,8],[96,1000,10,90,'block'],[140,1050,30,8,'moss'],[50,990,30,8,'moss'],[120,940,26,8],[20,884,40,8,'moss'],[150,830,30,8],[80,776,24,8,'moss'],[10,720,30,8],[130,664,40,8,'moss'],[70,606,26,8],[150,550,44,8,'moss'],[40,494,30,8],[110,440,30,8,'moss'],[30,384,26,8],[80,300,10,80,'block'],[130,330,30,8,'moss'],[40,276,28,8],[120,220,30,8,'moss'],[50,166,30,8],[140,112,36,8],[80,58,30,8]],
 3:[[20,1436,30,8],[100,1380,40,8],['S',60,1240,70,0.6,0.03,0,26],[140,1250,34,8,'wood'],['S',180,1100,60,0.7,0.026,1.2,24],[40,1090,30,8],[120,1030,30,8],['S',90,880,80,0.55,0.028,2.1,26],[20,900,26,8,'wood'],[140,840,40,8],['S',40,700,60,0.8,0.03,0.5,24],[100,690,30,8],[20,630,24,8,'wood'],['S',130,480,70,0.6,0.027,3,26],[40,480,30,8],[150,420,44,8],[80,360,24,8,'wood'],['S',180,220,70,0.7,0.025,1.7,24],[30,230,30,8],[110,170,28,8],[44,118,26,8,'wood'],[96,64,44,8,'exit']]
 };
@@ -346,7 +352,7 @@ const S={};
 function fresh(){Object.assign(S,{x:84,y:FLOOR-PH,vx:0,vy:0,grounded:true,charge:0,charging:false,state:'idle',t:0,minY:FLOOR-PH,
   lastFeet:FLOOR,lastX:84,chalks:[],jumps:0,falls:0,best:0,won:false,walk:0,sq:0,sqv:0});}
 fresh();
-const KEY='monofrog-v3';
+const KEY='monofrog-v4';
 let scene='intro',T=0,lastZone=0,toastT=0;
 let TR={phase:1,t:0,dur:28,fn:null},flash=0,camTop=-1;
 const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -389,7 +395,7 @@ document.querySelectorAll('.pad button').forEach(b=>{
 
 /* ---------- sound ---------- */
 let AC=null,muted=false;
-function audio(){if(AC||muted)return;try{AC=new (window.AudioContext||window.webkitAudioContext)();}catch(e){AC=null;}}
+function audio(){if(AC){if(AC.state==='suspended')AC.resume();if(!MU.on&&!muted)musicStart();return;}if(muted)return;try{AC=new (window.AudioContext||window.webkitAudioContext)();}catch(e){AC=null;}if(AC)musicStart();}
 function tone(type,f0,f1,dur,vol){if(!AC||muted)return;const t=AC.currentTime,o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.setValueAtTime(f0,t);o.frequency.exponentialRampToValueAtTime(f1,t+dur);g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(0.0008,t+dur);o.connect(g).connect(AC.destination);o.start(t);o.stop(t+dur+0.02);}
 function noise(dur,vol,cut){if(!AC||muted)return;const t=AC.currentTime,n=Math.floor(AC.sampleRate*dur),buf=AC.createBuffer(1,n,AC.sampleRate),d=buf.getChannelData(0);for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*(1-i/n);const s=AC.createBufferSource(),fl=AC.createBiquadFilter(),g=AC.createGain();s.buffer=buf;fl.type='lowpass';fl.frequency.value=cut;g.gain.value=vol;s.connect(fl).connect(g).connect(AC.destination);s.start(t);}
 function croak(f,dur,vol,delay){if(!AC||muted)return;try{const t=AC.currentTime+(delay||0),o=AC.createOscillator(),lfo=AC.createOscillator(),lg=AC.createGain(),g=AC.createGain(),fl=AC.createBiquadFilter();
@@ -403,8 +409,39 @@ function humSet(t){if(hum){hum.o.frequency.setTargetAtTime(170+300*t*t,AC.curren
 function humStop(){if(hum){const{o,g}=hum;hum=null;try{g.gain.setTargetAtTime(0,AC.currentTime,0.015);o.stop(AC.currentTime+0.1);}catch(e){}}}
 const sfx={jump:(t)=>{croak(150+40*t,0.09+0.04*t,0.2+0.04*t);tone2('sine',620+160*t,280,0.05,0.12,0.02);},land:()=>tone('triangle',150,80,0.07,0.18),bump:()=>tone('square',320,240,0.035,0.05),
   splat:()=>{tone2('sine',95,38,0.22,0.45);noise(0.06,0.2,900);croak(230,0.14,0.2,0.09);},win:()=>{[523,659,784,1046].forEach((f,i)=>setTimeout(()=>tone('triangle',f,f*1.01,0.18,0.14),i*110));}};
+/* ---------- 배경음악: 우물 울림이 있는 오르골 + 구역마다 겹이 늘어남 ---------- */
+const MU={on:false,bus:null,next:0,step:0,bar:0,drone:null};
+const NOTE=n=>440*Math.pow(2,(n-69)/12);
+const SCALE=[57,60,62,64,67,69,72,74,76,79];
+const PROG=[[45,57,60,64],[41,53,57,60],[48,55,60,64],[43,55,59,62]];
+function musicStart(){if(MU.on||!AC)return;try{
+  const bus=AC.createGain();bus.gain.value=muted?0:0.55;
+  const dl=AC.createDelay(1.2),fb=AC.createGain(),lp=AC.createBiquadFilter();dl.delayTime.value=0.38;fb.gain.value=0.38;lp.type='lowpass';lp.frequency.value=1800;
+  bus.connect(AC.destination);bus.connect(dl);dl.connect(lp);lp.connect(fb);fb.connect(dl);lp.connect(AC.destination);
+  const lpOut=AC.createGain();lpOut.gain.value=1;MU.bus=bus;MU.wet=lp;
+  const o=AC.createOscillator(),g=AC.createGain();o.type='sine';o.frequency.value=NOTE(33);g.gain.value=0.035;o.connect(g).connect(bus);o.start();MU.drone={o,g};
+  MU.next=AC.currentTime+0.15;MU.on=true;}catch(e){}}
+function mVol(){return muted?0:0.55;}
+function pluck(n,t,v,dur){const o=AC.createOscillator(),o2=AC.createOscillator(),g=AC.createGain();o.type='triangle';o2.type='sine';o.frequency.value=NOTE(n);o2.frequency.value=NOTE(n+12);
+  g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(v,t+0.008);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  const g2=AC.createGain();g2.gain.value=0.25;o.connect(g);o2.connect(g2).connect(g);g.connect(MU.bus);o.start(t);o2.start(t);o.stop(t+dur+0.05);o2.stop(t+dur+0.05);}
+function pad(ns,t,len,v){for(const n of ns){const o=AC.createOscillator(),g=AC.createGain(),f=AC.createBiquadFilter();o.type='sawtooth';o.frequency.value=NOTE(n);o.detune.value=(Math.random()-0.5)*10;
+  f.type='lowpass';f.frequency.value=700;g.gain.setValueAtTime(0.0001,t);g.gain.linearRampToValueAtTime(v,t+len*0.4);g.gain.linearRampToValueAtTime(0.0001,t+len);
+  o.connect(f).connect(g).connect(MU.bus);o.start(t);o.stop(t+len+0.05);}}
+function creak(t,v){const o=AC.createOscillator(),g=AC.createGain(),f=AC.createBiquadFilter();o.type='square';o.frequency.setValueAtTime(130,t);o.frequency.linearRampToValueAtTime(95,t+0.18);
+  f.type='bandpass';f.frequency.value=520;f.Q.value=6;g.gain.setValueAtTime(0.0001,t);g.gain.linearRampToValueAtTime(v,t+0.03);g.gain.linearRampToValueAtTime(0.0001,t+0.2);o.connect(f).connect(g).connect(MU.bus);o.start(t);o.stop(t+0.25);}
+function musicTick(){if(!MU.on||!AC)return;MU.bus.gain.setTargetAtTime(mVol(),AC.currentTime,0.08);if(muted)return;
+  const spb=60/66/2,z=scene==='play'?zoneOf(S.y+PH):1,calm=scene!=='play';
+  while(MU.next<AC.currentTime+0.25){const t=MU.next,st=MU.step%16,ch=PROG[MU.bar%4];
+    if(st===0){pluck(ch[0],t,0.16,2.6);if(z>=2||calm)pad(ch.slice(1),t,spb*16,calm?0.012:0.018);}
+    if(st===8)pluck(ch[0]+7,t,0.08,1.8);
+    const dens=calm?0.22:z===1?0.3:z===2?0.38:0.44,r=h(MU.bar*17+st,z*7+3);
+    if(st%2===0&&r<dens){const ni=Math.floor(h(MU.bar*5+st,11)*SCALE.length);pluck(SCALE[ni]+(z>=3&&st%4===0?12:0),t,0.06+0.04*h(st,MU.bar),1.4);}
+    if(z===2&&st%4===2&&h(MU.bar,st)<0.5)pluck(ch[2]+12,t,0.03,0.9);
+    if(z===3&&!calm&&(st===4||st===12))creak(t,0.018);
+    MU.next+=spb;MU.step++;if(MU.step%16===0)MU.bar++;}}
 const SPK='<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M2 6h3l4-3v10l-4-3H2z" fill="currentColor"/><path d="M11 5.5c1 .8 1 4.2 0 5M12.8 4c1.9 1.8 1.9 6.2 0 8" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>',MUT='<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M2 6h3l4-3v10l-4-3H2z" fill="currentColor"/><path d="M11 6l4 4M15 6l-4 4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>';
-document.getElementById('mute').addEventListener('click',e=>{muted=!muted;const b=e.currentTarget;b.innerHTML=muted?MUT:SPK;b.setAttribute('aria-pressed',String(muted));b.setAttribute('aria-label',muted?'소리 켜기':'소리 끄기');if(muted)humStop();});
+document.getElementById('mute').addEventListener('click',e=>{muted=!muted;const b=e.currentTarget;b.innerHTML=muted?MUT:SPK;b.setAttribute('aria-pressed',String(muted));b.setAttribute('aria-label',muted?'소리 켜기':'소리 끄기');if(muted)humStop();else audio();});
 
 /* ---------- physics ---------- */
 function hit(ax,ay,aw,ah){for(const p of PL)for(const s of[-W,0,W]){const px=p.x+s;if(ax<px+p.w&&ax+aw>px&&ay<p.y+p.h&&ay+ah>p.y)return{p,px};}return null;}
@@ -542,7 +579,8 @@ function render(){
   const fy=Math.round(feet-top)-bob,dx=Math.round(S.x+PW/2-sw/2)+jit,dy=fy-Math.round(24*ky);
   ctx.imageSmoothingEnabled=false;
   for(const s of[0,-W,W]){const xx=dx+s;if(xx>-40&&xx<W)ctx.drawImage(SPR[spr][S.face<0?'-1':'1'],xx,dy,sw,shh);}
-  if(S.charging){const t=Math.min(1,S.charge/MAXC),gx=Math.round(S.x+PW/2-8),gy=dy+3;rect(gx,gy,16,4,0);rect(gx+1,gy+1,14,2,3);rect(gx+1,gy+1,Math.max(1,Math.round(14*t)),2,8);}
+  if(S.charging){const t=Math.min(1,S.charge/MAXC),gx=Math.round(S.x+PW/2-13),gy=dy+1;rect(gx,gy,26,5,0);
+    for(let k=0;k<5;k++){const sx=gx+1+k*5,f=Math.max(0,Math.min(1,t*5-k));rect(sx,gy+1,4,3,3);if(f>0)rect(sx,gy+1,Math.max(1,Math.round(4*f)),3,f>=1?8:7);}}
   }
   ctx.restore();
 }
@@ -640,7 +678,7 @@ let last=performance.now(),acc=0,hudT=0,saveT=0;
 function loop(now){
   acc+=Math.min(100,now-last);last=now;
   while(acc>=1000/60){step();acc-=1000/60;frame++;if(++saveT>90){saveT=0;if(S.grounded)save();}}
-  render();drawFx();if(++hudT>5){hudT=0;hud();}
+  render();drawFx();musicTick();if(++hudT>5){hudT=0;hud();}
   requestAnimationFrame(loop);
 }
 const stage=document.getElementById('stage');
