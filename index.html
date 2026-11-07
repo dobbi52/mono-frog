@@ -67,6 +67,8 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;touch
 .acc span{display:flex;flex-direction:column;min-width:0;overflow:hidden;text-overflow:ellipsis}
 .acc em{font-style:normal;color:var(--mute)}
 .acc button{font-size:11px;padding:5px 9px;border-radius:0;flex:none}
+.me{position:absolute;left:0;top:0;z-index:3;pointer-events:none;background:#fff;color:#000;font-weight:800;font-size:max(11px,calc(var(--u)*5.4));line-height:1;padding:3px 5px;box-shadow:1px 1px 0 #000;transform:translate(-100%,-50%)}
+.me::after{content:"";position:absolute;left:100%;top:50%;margin-top:-4px;border:4px solid transparent;border-left:5px solid #fff;border-right:0}
 .mfoot{display:flex;flex-direction:column;align-items:center;gap:6px;width:100%}
 #mapNote{font-size:max(10px,calc(var(--u)*4.4));background:rgba(0,0,0,.6);padding:2px 8px;max-width:none}
 .acts{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
@@ -76,7 +78,7 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;touch
 .overlay.leaving{opacity:0}
 @keyframes dropIn{from{transform:translateY(-14px);opacity:0}to{transform:none;opacity:1}}
 @keyframes riseIn{from{transform:translateY(14px);opacity:0}to{transform:none;opacity:1}}
-@keyframes plqIn{from{transform:translate(36px,-50%);opacity:0}to{transform:translate(0,-50%);opacity:1}}
+@keyframes plqIn{from{opacity:0}to{opacity:1}}
 @keyframes popIn{0%{transform:scale(.4);opacity:0}70%{transform:scale(1.12);opacity:1}100%{transform:scale(1)}}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 .map:not([hidden]) .mtitle{animation:dropIn .4s steps(5) .1s both}
@@ -139,6 +141,7 @@ button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
     <div class="overlay map" id="map" hidden>
       <h2 class="mtitle">우물 지도</h2>
       <div id="plaques"></div>
+      <div class="me" id="meTag" aria-hidden="true">나</div>
       <div class="mfoot">
         <div class="acts"><button id="cont" class="main">이어하기</button><button id="newg">처음부터</button></div>
       </div>
@@ -744,9 +747,12 @@ function drawMap(){if(mapDirty||!mapBase||mapBase.height!==VH)buildMap();const G
   for(let i=0;i<6;i++){const x=G.x0+((h(i,3)*68+Math.sin(frame*0.01+i)*6)|0),y=Math.round(G.band(5)+((h(i,4)*G.zh+frame*0.08)%G.zh));if(((frame+i*30)>>5)%2)rect(x,y,1,1,7);}
   for(let i=0;i<5;i++){const x=Math.round(G.x0+8+h(i,8)*52+Math.sin(frame*0.02+i)*5),y=Math.round(G.band(1+(i%2))+10+h(i,9)*(G.zh-20)+Math.cos(frame*0.025+i)*4);if(((frame+i*50)%200)<130)rect(x,y,1,1,8);}
   ctx.drawImage(mapOver,0,0);
-  const wy=S.jumps>0?S.y+PH:FLOOR,fy=Math.round(mapY(wy))-(S.jumps>0?0:5),fx=Math.round(G.x0+(S.x+PW/2)/W*(G.x1-G.x0));
-  const bob=((frame>>4)&1);ctx.imageSmoothingEnabled=false;ctx.drawImage(SPR.idle[S.face<0?'-1':'1'],fx-8,fy-12-bob,16,14);
-  if(((frame>>3)%4)===0){rect(fx-1,fy-18-bob,1,1,8);rect(fx-2,fy-17-bob,3,1,8);}
+  const wy=S.jumps>0?S.y+PH:FLOOR,cz=zoneOf(wy);ctx.fillStyle=coverPat(9,'#ffffff');ctx.fillRect(G.x0,Math.round(G.band(cz)),G.x1-G.x0,Math.round(G.zh));
+  const fy=Math.round(mapY(wy))-(S.jumps>0?0:5),fx=Math.round(G.x0+(S.x+PW/2)/W*(G.x1-G.x0));
+  const bob=((frame>>4)&1),rr=12+((frame>>3)%4),cyR=fy-9;
+  for(let a=0;a<48;a++){const t=a/48*Math.PI*2;if((a+(frame>>2))%4<2){const X=Math.round(fx+Math.cos(t)*rr),Y=Math.round(cyR+Math.sin(t)*rr*0.8);rect(X,Y,1,1,8);rect(X+1,Y+1,1,1,0);}}
+  ctx.imageSmoothingEnabled=false;ctx.drawImage(SPR.idle[S.face<0?'-1':'1'],fx-16,fy-24-bob);
+  const me=document.getElementById('meTag');if(me){const L='calc(var(--u)*'+(G.x0-8)+')',T='calc(var(--u)*'+cyR+')';if(me.style.left!==L)me.style.left=L;if(me.style.top!==T)me.style.top=T;}
 }
 function toMap(){scene='map';document.getElementById('intro').hidden=true;document.getElementById('win').hidden=true;
   if(S.won){fresh();try{localStorage.removeItem(KEY);markDirty();}catch(e){}}
