@@ -149,9 +149,8 @@ button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
       <div class="acts"><button id="pickLocal" class="main">이 기기 판</button><button id="pickRemote">다른 기기 판</button></div>
     </div>
     <div class="overlay" id="win" hidden>
-      <h2>3구역 탈출!</h2>
+      <h2>우물 탈출!</h2>
       <p id="winText"></p>
-      <p>다음 구역 '바람 구멍'은 아직 준비 중이에요.</p>
       <div class="acts"><button id="toMap" class="main">우물 지도</button><button id="again">처음부터 다시</button></div>
     </div>
   </div>
@@ -165,7 +164,7 @@ button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 
 <script>
 const cv=document.getElementById('cv'),ctx=cv.getContext('2d');
-const W=180,SH=240,NS=18,WH=SH*NS,FLOOR=WH-20;let VH=240;
+const W=180,SH=240,NS=30,WH=SH*NS,FLOOR=WH-20;let VH=240;
 const P=['#000000','#141414','#262626','#3d3d3d','#5c5c5c','#828282','#adadad','#d6d6d6','#ffffff'];
 const BAY=[[0,8,2,10],[12,4,14,6],[3,11,1,9],[15,7,13,5]];
 function h(x,y){let n=x*374761393+y*668265263;n=(n^(n>>13))*1274126177;return((n^(n>>16))>>>0)/4294967295;}
@@ -181,15 +180,23 @@ const ZL={
  [60,236,30,8],[150,192,40,8],[40,148,30,8],[150,106,30,8,'wood'],[96,64,44,8]],
 
 2:[[40,1430,32,8],[110,1376,46,8,'moss'],[20,1322,30,8,'moss'],[150,1270,44,8,'moss'],[60,1214,28,8],[118,1160,36,8,'moss'],[30,1100,24,8],[96,1000,10,90,'block'],[140,1050,30,8,'moss'],[50,990,30,8,'moss'],[120,940,26,8],[20,884,40,8,'moss'],[150,830,30,8],[80,776,24,8,'moss'],[10,720,30,8],[130,664,40,8,'moss'],[70,606,26,8],[150,550,44,8,'moss'],[40,494,30,8],[110,440,30,8,'moss'],[30,384,26,8],[80,300,10,80,'block'],[130,330,30,8,'moss'],[40,276,28,8],[120,220,30,8,'moss'],[50,166,30,8],[140,112,36,8],[80,58,30,8]],
-3:[[20,1436,30,8],[100,1380,40,8],['S',60,1240,70,0.6,0.03,0,26],[140,1250,34,8,'wood'],['S',180,1100,60,0.7,0.026,1.2,24],[40,1090,30,8],[120,1030,30,8],['S',90,880,80,0.55,0.028,2.1,26],[20,900,26,8,'wood'],[140,840,40,8],['S',40,700,60,0.8,0.03,0.5,24],[100,690,30,8],[20,630,24,8,'wood'],['S',130,480,70,0.6,0.027,3,26],[40,480,30,8],[150,420,44,8],[80,360,24,8,'wood'],['S',180,220,70,0.7,0.025,1.7,24],[30,230,30,8],[110,170,28,8],[44,118,26,8,'wood'],[96,64,44,8,'exit']]
+3:[[20,1436,30,8],[100,1380,40,8],['S',60,1240,70,0.6,0.03,0,26],[140,1250,34,8,'wood'],['S',180,1100,60,0.7,0.026,1.2,24],[40,1090,30,8],[120,1030,30,8],['S',90,880,80,0.55,0.028,2.1,26],[20,900,26,8,'wood'],[140,840,40,8],['S',40,700,60,0.8,0.03,0.5,24],[100,690,30,8],[20,630,24,8,'wood'],['S',130,480,70,0.6,0.027,3,26],[40,480,30,8],[150,420,44,8],[80,360,24,8,'wood'],['S',180,220,70,0.7,0.025,1.7,24],[30,230,30,8],[110,170,28,8],[44,118,26,8,'wood'],[96,64,44,8]],
+4:[[40,1430,32,8],[110,1380,40,8],[150,1300,44,8],[60,1240,30,8],[120,1150,30,8,'wood'],[10,1090,26,8],[96,1030,10,80,'block'],[140,1040,30,8],[60,960,30,8],[150,900,40,8],[20,840,30,8,'moss'],[110,780,28,8],[30,720,26,8,'wood'],[150,660,40,8],[80,600,24,8],[10,540,30,8],[120,480,30,8],[70,420,10,70,'block'],[20,400,26,8],[150,350,40,8],[90,290,26,8,'wood'],[20,230,30,8],[130,170,30,8],[60,110,26,8],[96,58,44,8]],
+5:[[40,1430,32,8],[120,1376,36,8,'moss'],['S',60,1240,60,0.6,0.03,0.4,24],[150,1250,44,8],[50,1190,26,8,'moss'],[110,1100,10,80,'block'],[150,1120,30,8],[20,1060,30,8,'wood'],['S',130,900,70,0.65,0.028,1.4,24],[30,930,26,8],[150,860,40,8,'moss'],[70,800,26,8],[10,740,24,8,'wood'],[120,690,30,8],['S',180,520,70,0.7,0.027,2.2,22],[40,600,30,8,'moss'],[130,560,30,8],[30,480,26,8],[110,420,24,8,'wood'],[160,360,40,8,'moss'],[60,300,26,8],[130,240,26,8],[40,180,30,8,'moss'],[148,120,26,8],[96,58,44,8,'exit']]
 };
-function buildPL(){const out=[{x:0,y:FLOOR,w:180,h:20,tag:'floor'}];for(const z of[1,2,3]){const off=(3-z)*1440;for(const a of ZL[z]){if(a[0]==='S')out.push({x:0,y:0,w:a[7],h:6,tag:'swing',sw:{ax:a[1],ay:a[2]+off,len:a[3],amp:a[4],spd:a[5],ph:a[6]},cx:0,cyy:0,dcx:0,dcy:0});else out.push({x:a[0],y:a[1]+off,w:a[2],h:a[3],tag:a[4]||''});}}return out;}
+/* wind bands per zone: [y0, y1, dir, strength, period, on-fraction, phase] in zone-local y */
+const WL={4:[[1290,1345,-1,0.07,240,0.5,0],[1160,1215,1,0.07,220,0.5,60],[1050,1110,-1,0.08,240,0.5,120],[880,940,1,0.08,200,0.55,30],[700,760,-1,0.08,260,0.5,90],[560,620,1,0.09,240,0.5,0],[330,390,-1,0.09,220,0.5,150],[150,210,1,0.09,240,0.5,40]],
+ 5:[[1000,1050,1,0.08,220,0.5,0],[640,690,-1,0.09,240,0.5,80],[380,430,1,0.09,200,0.5,30],[200,250,-1,0.1,240,0.5,120]]};
+const WINDS=[];for(const z in WL){const off=(5-z)*1440;for(const a of WL[z])WINDS.push({y0:a[0]+off,y1:a[1]+off,dir:a[2],str:a[3],per:a[4],on:a[5],ph:a[6]});}
+function windOn(w,t){return((t+w.ph)%w.per)<w.per*w.on;}
+function windAx(cy,t){for(const w of WINDS)if(cy>=w.y0&&cy<w.y1&&windOn(w,t))return w.dir*w.str;return 0;}
+function buildPL(){const out=[{x:0,y:FLOOR,w:180,h:20,tag:'floor'}];for(const z of[1,2,3,4,5]){const off=(5-z)*1440;for(const a of ZL[z]){if(a[0]==='S')out.push({x:0,y:0,w:a[7],h:6,tag:'swing',sw:{ax:a[1],ay:a[2]+off,len:a[3],amp:a[4],spd:a[5],ph:a[6]},cx:0,cyy:0,dcx:0,dcy:0});else out.push({x:a[0],y:a[1]+off,w:a[2],h:a[3],tag:a[4]||''});}}return out;}
 const PL=buildPL(),SWINGS=PL.filter(p=>p.sw);
 function updateSwings(t,reset){for(const p of SWINGS){const s=p.sw,ang=s.amp*Math.sin(t*s.spd+s.ph),cx=s.ax+Math.sin(ang)*s.len,cy=s.ay+Math.cos(ang)*s.len;
   if(p.init&&!reset){p.dcx=cx-p.cx;p.dcy=cy-p.cyy;}else{p.dcx=0;p.dcy=0;p.init=true;}p.cx=cx;p.cyy=cy;p.x=((cx-p.w/2)%W+W)%W;p.y=cy;}}
 updateSwings(0,true);
 const ZONE_NAMES=['','바닥 웅덩이','이끼 벽','무너진 두레박','바람 구멍','빛의 입구'];
-function zoneOf(y){return y>2880?1:y>1440?2:3;}
+function zoneOf(y){return y>5760?1:y>4320?2:y>2880?3:y>1440?4:5;}
 
 /* ---------- backgrounds: hand-stacked irregular stones + props, pre-rendered per screen ---------- */
 function vn(x,y){const xi=Math.floor(x),yi=Math.floor(y),fx=x-xi,fy=y-yi,sx=fx*fx*(3-2*fx),sy=fy*fy*(3-2*fy);const a=h(xi,yi),b=h(xi+1,yi),c=h(xi,yi+1),d=h(xi+1,yi+1);return a+(b-a)*sx+(c-a)*sy+(a-b-c+d)*sx*sy;}
@@ -221,13 +228,11 @@ function propBucket(g,x,y){g.fillStyle=P[2];g.fillRect(x,y-9,14,9);g.fillStyle=P
   g.fillStyle=P[0];g.fillRect(x-1,y-7,2,5);g.fillStyle=P[1];g.fillRect(x+1,y-7,1,5);
   g.fillStyle=P[3];g.fillRect(x+14,y-4,4,2);g.fillRect(x+16,y-6,1,2);gp(g,x+18,y-2,3);
   for(let a=0;a<9;a++)gp(g,x+5+a,y-10-Math.round(Math.sin(a/8*Math.PI)*4),a%2?5:4);}
-const SHROOMS=[[170,1385],[66,1292],[150,1232],[12,1140],[124,1100],[60,1000],[170,920],[48,860],[150,800],[20,700],[120,610],[60,540],[170,450],[48,392],[130,300],[20,280],[90,190]].map(m=>[m[0],m[1]+2880]).concat([[170,1360],[60,1240],[150,1120],[20,980],[130,860],[40,720],[160,600],[70,470],[140,350],[30,200],[120,100]].map(m=>[m[0],m[1]+1440]),[[150,1300],[20,1000],[160,700],[40,420]]);
+const SHROOMS=[[170,1385],[66,1292],[150,1232],[12,1140],[124,1100],[60,1000],[170,920],[48,860],[150,800],[20,700],[120,610],[60,540],[170,450],[48,392],[130,300],[20,280],[90,190]].map(m=>[m[0],m[1]+5760]).concat([[170,1360],[60,1240],[150,1120],[20,980],[130,860],[40,720],[160,600],[70,470],[140,350],[30,200],[120,100]].map(m=>[m[0],m[1]+4320]),[[150,1300],[20,1000],[160,700],[40,420]].map(m=>[m[0],m[1]+2880]),[[170,1330],[30,1000],[160,620],[40,260]].map(m=>[m[0],m[1]+1440]));
 function propShroom(g,x,y,seed){const n=2+Math.floor(h(seed,9)*2);for(let i=0;i<n;i++){const ox=x+(i-1)*4+(i===2?1:0),big=i===0,cw=big?5:3,hh=big?3:2;
   for(let k=0;k<hh;k++)gp(g,ox,y-k,6);g.fillStyle=P[8];g.fillRect(ox-(cw>>1),y-hh-1,cw,1);g.fillStyle=P[7];g.fillRect(ox-(cw>>1),y-hh,cw,1);if(big){g.fillStyle=P[8];g.fillRect(ox-1,y-hh-2,3,1);gp(g,ox-2,y-hh,6);gp(g,ox+2,y-hh,6);}}
   gp(g,x-3,y+1,4);g.fillStyle=P[3];g.fillRect(x-4,y+1,9,1);}
-const PROPS=[['bucket',62,FLOOR-1],['ring',152,4226],['root',0,4060,1,42],['tally',126,3960],['ring',30,3910],['root',W,3716,-1,40],['tally',64,3520],['root',0,3332,1,36],['tally',120,3162],['ring',150,3020],
- ['ring',150,2730],['ring',20,2500],['root',W,2640,-1,40],['root',0,2240,1,44],['root',W,1860,-1,36],['tally',100,2130],
- ['beam',0,1330,60],['beam',W,1000,-50],['beam',0,600,55],['beam',W,300,-45],['rope',30,1150,40],['rope',160,780,55],['rope',70,250,30],['tally',120,450],['ring',20,950]];
+const PROPS=[['bucket',62,FLOOR-1],['ring',152,7106],['root',0,6940,1,42],['tally',126,6840],['ring',30,6790],['root',W,6596,-1,40],['tally',64,6400],['root',0,6212,1,36],['tally',120,6042],['ring',150,5900],['ring',150,5610],['ring',20,5380],['root',W,5520,-1,40],['root',0,5120,1,44],['root',W,4740,-1,36],['tally',100,5010],['beam',0,4210,60],['beam',W,3880,-50],['beam',0,3480,55],['beam',W,3180,-45],['rope',30,4030,40],['rope',160,3660,55],['rope',70,3130,30],['tally',120,3330],['ring',20,3830],['ring',150,2600],['tally',30,2300],['rope',160,2050,40],['ring',20,1700],['tally',120,1200],['rope',40,900,30]];
 const BG=new Array(NS).fill(null);
 function buildBG(s){
   const c=document.createElement('canvas');c.width=W;c.height=SH;const g=c.getContext('2d');const img=g.createImageData(W,SH);
@@ -247,10 +252,12 @@ function buildBG(s){
       if(h(x*3,wy*5)>0.93)sv-=0.24;
       if(h(B_.b,id)>0.82&&lx===Math.floor(sw*0.4)+(ly>>1))sv=0.32;
     }
-    const zn=wy>2880?1:wy>1440?2:3;
+    const zn=zoneOf(wy);
     let v=hl*cyl*(mort?0.2:sv);
     if(zn===2){const mn=vn(x*0.08,wy*0.06)*0.7+vn(x*0.23,wy*0.19)*0.3;if(mn>0.56){const e=Math.min(1,(mn-0.56)*6);v=hl*cyl*(0.38+0.42*h(x*7+1,wy*3)*e+(h(x,wy*5)>0.85?0.25:0));}}
     if(zn===3&&!mort)v*=1.06;
+    if(zn===5){const e=1-wy/1440;v=v*(1-0.55*e)+0.62*e*e+0.18*e;}
+    for(const w of WINDS){const cy=(w.y0+w.y1)/2,hx=w.dir>0?2:W-3;const d=((x-hx)/7)**2+((wy-cy)/9)**2;if(d<1)v=d<0.6?0.03:0.25;}
     for(const m of SHROOMS){if(Math.abs(wy-m[1])>28||Math.abs(x-m[0])>30)continue;const dd=Math.hypot(x-m[0],(wy-m[1])*1.15);if(dd<30){const f=1-dd/30;v+=0.34*f*f*(mort?0.6:1);}}
     const bc=112-wy*0.07,bw=20+wy*0.02,d=Math.abs(x-bc);
     if(d<bw)v+=0.22*(1-d/bw)*Math.pow(1-t,2.6);
@@ -311,9 +318,10 @@ function makeLedge(p,i){
   if(!floor&&h(i,55)>0.4){const px=2+Math.floor(h(i,56)*(w-6));g.fillStyle=P[7];g.fillRect(px,M-1,1,1);g.fillStyle=P[5];g.fillRect(px+1,M-1,1,1);}
   return c;
 }
-const LS=PL.map((p,i)=>makeLedge(p,i));
+function invLedge(c){const g=c.getContext('2d'),d=g.getImageData(0,0,c.width,c.height);for(let k=0;k<d.data.length;k+=4){if(d.data[k+3]===0)continue;const v=d.data[k];const nv=v<12?255:Math.max(0,230-v);d.data[k]=d.data[k+1]=d.data[k+2]=nv;}g.putImageData(d,0,0);return c;}
+const LS=PL.map((p,i)=>{const c=makeLedge(p,i);return(p.y<620&&!p.sw)?invLedge(c):c;});
 /* drips: fixed sources, fall to the next ledge; ripples on the floor pools */
-const DRIPS=[[55,4099],[130,4045],[140,3889],[50,3839],[100,3765],[100,3219],[70,4260],[106,3541],[90,2700],[30,2500],[140,2300],[70,2050],[120,1800],[50,1600],[100,1200],[40,800],[150,500]].map((d,i)=>({x:d[0],sy:d[1],y:d[1],vy:0,wait:60+i*37,on:false}));
+const DRIPS=[[55,6979],[130,6925],[140,6769],[50,6719],[100,6645],[100,6099],[70,7140],[106,6421],[90,5580],[30,5380],[140,5180],[70,4930],[120,4680],[50,4480],[100,4080],[40,3680],[150,3380],[60,2500],[140,2100],[30,1500]].map((d,i)=>({x:d[0],sy:d[1],y:d[1],vy:0,wait:60+i*37,on:false}));
 const ripples=[],spores=[];
 const FLIES=[...Array(56)].map((_,i)=>({bx:12+h(i,21)*156,by:230+h(i,22)*(FLOOR-260),ax:10+h(i,23)*22,ay:6+h(i,24)*12,f1:0.006+h(i,25)*0.01,f2:0.009+h(i,26)*0.012,ph:h(i,27)*99,bl:h(i,28)*400}));
 /* ---------- frog sprites: side view, facing right; mirrored for left ---------- */
@@ -371,9 +379,9 @@ const SPR={};for(const k in POSE){const r=makeFrog(POSE[k],0.66);SPR[k]={'1':r,'
 const PW=11,PH=9,GRAV=0.27,MAXV=6.4,MAXC=38;
 const S={};
 function fresh(){Object.assign(S,{x:84,y:FLOOR-PH,vx:0,vy:0,grounded:true,charge:0,charging:false,state:'idle',t:0,minY:FLOOR-PH,
-  lastFeet:FLOOR,lastX:84,chalks:[],jumps:0,falls:0,best:0,won:false,walk:0,sq:0,sqv:0});}
+  lastFeet:FLOOR,lastX:84,chalks:[],jumps:0,falls:0,best:0,won:false,walk:0,sq:0,sqv:0,pt:0});}
 fresh();
-const KEY='monofrog-v4';
+const KEY='monofrog-v5';
 let scene='intro',T=0,lastZone=0,toastT=0;
 let TR={phase:1,t:0,dur:28,fn:null},flash=0,camTop=-1;
 const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -392,7 +400,7 @@ function drawFx(){
 const RKEY='monofrog-rec-v1';let REC={best:0,cleared:false,bestJumps:0,bestFalls:0,runs:0};
 try{const r=JSON.parse(localStorage.getItem(RKEY)||'null');if(r)Object.assign(REC,r);}catch(e){}
 function saveRec(){try{localStorage.setItem(RKEY,JSON.stringify(REC));}catch(e){}markDirty();}
-function save(){try{localStorage.setItem(KEY,JSON.stringify({x:S.x,y:S.y,chalks:S.chalks,jumps:S.jumps,falls:S.falls,best:S.best,lastFeet:S.lastFeet,lastX:S.lastX}));}catch(e){}markDirty();}
+function save(){try{localStorage.setItem(KEY,JSON.stringify({x:S.x,y:S.y,chalks:S.chalks,jumps:S.jumps,falls:S.falls,best:S.best,lastFeet:S.lastFeet,lastX:S.lastX,pt:S.pt||0}));}catch(e){}markDirty();}
 function load(){try{const d=JSON.parse(localStorage.getItem(KEY)||'null');if(d&&typeof d.x==='number'){Object.assign(S,d);S.grounded=true;S.state='idle';S.vx=S.vy=0;}}catch(e){}}
 load();S.sq=0;S.sqv=0;S.face=S.face===-1?-1:1;S.moving=false;S.walk=S.walk||0;
 let freeze=0,shake=0;
@@ -424,7 +432,13 @@ function croak(f,dur,vol,delay){if(!AC||muted)return;try{const t=AC.currentTime+
   lfo.frequency.value=38;lg.gain.value=vol*0.9;g.gain.setValueAtTime(0.0001,t);g.gain.linearRampToValueAtTime(vol,t+0.01);g.gain.linearRampToValueAtTime(0.0001,t+dur);
   lfo.connect(lg).connect(g.gain);o.connect(fl).connect(g).connect(AC.destination);o.start(t);lfo.start(t);o.stop(t+dur+0.02);lfo.stop(t+dur+0.02);}catch(e){}}
 function tone2(type,f0,f1,dur,vol,delay){if(!AC||muted)return;const t=AC.currentTime+(delay||0),o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.setValueAtTime(f0,t);o.frequency.exponentialRampToValueAtTime(f1,t+dur);g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(vol,t+0.005);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);o.connect(g).connect(AC.destination);o.start(t);o.stop(t+dur+0.03);}
-let hum=null;
+let hum=null,wnd=null,windSeen=0;
+function windSound(on){if(!AC||muted){if(wnd)wnd.g.gain.setTargetAtTime(0,AC?AC.currentTime:0,0.1);return;}
+  if(!wnd){try{const n=AC.sampleRate*2,b=AC.createBuffer(1,n,AC.sampleRate),d=b.getChannelData(0);for(let i=0;i<n;i++)d[i]=Math.random()*2-1;
+    const src=AC.createBufferSource(),f=AC.createBiquadFilter(),g=AC.createGain();src.buffer=b;src.loop=true;f.type='bandpass';f.frequency.value=700;f.Q.value=0.8;g.gain.value=0;src.connect(f).connect(g).connect(AC.destination);src.start();wnd={g,f};}catch(e){return;}}
+  wnd.g.gain.setTargetAtTime(on?0.07:0,AC.currentTime,on?0.15:0.25);}
+function inhale(){if(!AC||muted)return;try{const t=AC.currentTime,n=Math.floor(AC.sampleRate*0.6),b=AC.createBuffer(1,n,AC.sampleRate),d=b.getChannelData(0);for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*(i/n);
+  const s2=AC.createBufferSource(),f=AC.createBiquadFilter(),g=AC.createGain();s2.buffer=b;f.type='bandpass';f.frequency.setValueAtTime(400,t);f.frequency.exponentialRampToValueAtTime(1600,t+0.6);f.Q.value=1.5;g.gain.value=0.06;s2.connect(f).connect(g).connect(AC.destination);s2.start(t);}catch(e){}}
 function humStart(){if(!AC||muted||hum)return;try{const o=AC.createOscillator(),g=AC.createGain();o.type='triangle';o.frequency.value=170;g.gain.value=0;o.connect(g).connect(AC.destination);o.start();g.gain.setTargetAtTime(0.035,AC.currentTime,0.03);hum={o,g};}catch(e){}}
 function humSet(t){if(hum){hum.o.frequency.setTargetAtTime(170+300*t*t,AC.currentTime,0.02);}}
 function humStop(){if(hum){const{o,g}=hum;hum=null;try{g.gain.setTargetAtTime(0,AC.currentTime,0.015);o.stop(AC.currentTime+0.1);}catch(e){}}}
@@ -456,7 +470,7 @@ function musicTick(){if(!MU.on||!AC)return;MU.bus.gain.setTargetAtTime(mVol(),AC
   while(MU.next<AC.currentTime+0.25){const t=MU.next,st=MU.step%16,ch=PROG[MU.bar%4];
     if(st===0){pluck(ch[0],t,0.16,2.6);if(z>=2||calm)pad(ch.slice(1),t,spb*16,calm?0.012:0.018);}
     if(st===8)pluck(ch[0]+7,t,0.08,1.8);
-    const dens=calm?0.22:z===1?0.3:z===2?0.38:0.44,r=h(MU.bar*17+st,z*7+3);
+    const dens=calm?0.22:[0,0.3,0.38,0.44,0.46,0.56][z],r=h(MU.bar*17+st,z*7+3);
     if(st%2===0&&r<dens){const ni=Math.floor(h(MU.bar*5+st,11)*SCALE.length);pluck(SCALE[ni]+(z>=3&&st%4===0?12:0),t,0.06+0.04*h(st,MU.bar),1.4);}
     if(z===2&&st%4===2&&h(MU.bar,st)<0.5)pluck(ch[2]+12,t,0.03,0.9);
     if(z===3&&!calm&&(st===4||st===12))creak(t,0.018);
@@ -477,7 +491,7 @@ function land(p,iv){
   S.lastFeet=feet;S.lastX=S.x;
   if(drop>118){S.state='splat';S.t=50;S.falls++;sfx.splat();puff(S.x+PW/2,feet,16,18);freeze=5;shake=4;}
   else{S.state='idle';sfx.land();puff(S.x+PW/2,feet,iv>4.5?7:4,iv>4.5?12:8);if(iv>5)shake=1.5;}
-  if(p.tag==='exit'&&!S.won){S.won=true;sfx.win();showWin();}
+  if(p.tag==='exit'&&!S.won){S.won=true;humStop();transition(()=>{scene='ending';endT=0;flash=1;},26);}
   if(!p.sw)save();
 }
 function step(){
@@ -485,7 +499,7 @@ function step(){
   const dir=(In.right?1:0)-(In.left?1:0);
   const press=In.jump&&!prevJump,rel=!In.jump&&prevJump;prevJump=In.jump;
   if(freeze>0){freeze--;return;}
-  T++;updateSwings(T);
+  T++;updateSwings(T);if(!S.won)S.pt=(S.pt||0)+1;
   if(S.grounded&&S.gp&&S.gp.sw){const p=S.gp;S.x+=p.dcx;S.y=p.y-PH;wrapX();
     if(!hit(S.x,S.y+PH,PW,1)){S.grounded=false;S.vx=p.dcx;S.vy=p.dcy;S.minY=S.y;S.state=S.state==='splat'?'splat':'air';S.charging=false;humStop();S.gp=null;}}
   const wasMoving=S.moving;S.moving=false;
@@ -519,7 +533,7 @@ function step(){
     if(wasMoving&&!S.moving&&S.grounded)S.sqv+=0.07;
     return;
   }
-  const gm=Math.abs(S.vy)<1?0.5:(S.vy>0?1.25:1);S.vy=Math.min(6.8,S.vy+GRAV*gm);
+  const gm=Math.abs(S.vy)<1?0.5:(S.vy>0?1.25:1);S.vy=Math.min(6.8,S.vy+GRAV*gm);const wa=windAx(S.y+PH/2,T);if(wa){S.vx=Math.max(-3,Math.min(3,S.vx+wa));if(Math.random()<0.3)parts.push({x:S.x+PW/2-Math.sign(wa)*6,y:S.y+2+Math.random()*6,vx:Math.sign(wa)*1.5,vy:0,life:8,c:6});}
   S.x+=S.vx;
   let c=hit(S.x,S.y,PW,PH);
   if(c){S.x=S.vx>0?c.px-PW-0.01:c.px+c.p.w+0.01;S.vx=-S.vx*0.55;sfx.bump();}
@@ -557,6 +571,7 @@ const motes=[...Array(22)].map((_,i)=>({x:h(i,1)*W,y:h(i,2)*SH,s:0.02+h(i,3)*0.0
 let frame=0;
 function render(){
   if(scene==='map'){drawMap();return;}
+  if(scene==='ending'){drawEnding();return;}
   ctx.save();if(shake>0.1){ctx.translate(Math.round((Math.random()-0.5)*shake),Math.round((Math.random()-0.5)*shake));shake*=0.8;}else shake=0;
   const feet=S.y+PH;const idx=Math.max(0,Math.min(NS-1,Math.floor((feet-1)/SH)));const tgtTop=scene==='play'?Math.max(0,Math.min(WH-VH,idx*SH-Math.round((VH-SH)/2))):WH-VH;
   if(camTop<0||RM||Math.abs(tgtTop-camTop)>SH*1.6)camTop=tgtTop;else{camTop+=(tgtTop-camTop)*0.32;if(Math.abs(tgtTop-camTop)<0.6)camTop=tgtTop;}
@@ -572,6 +587,12 @@ function render(){
     if(on>0.85){rect(x-2,sy,1,1,3);rect(x+2,sy,1,1,3);rect(x,sy-2,1,1,3);rect(x,sy+2,1,1,3);}}
   for(const m of SHROOMS){if(m[1]<top-4||m[1]>top+VH+4)continue;if(Math.random()<0.012)spores.push({x:m[0]+(Math.random()-0.5)*6,y:m[1]-4,life:70+Math.random()*50,d:Math.random()*6});}
   for(let i=spores.length-1;i>=0;i--){const p=spores[i];p.y-=0.14;p.x+=Math.sin((p.life+p.d)*0.08)*0.12;if(--p.life<=0){spores.splice(i,1);continue;}const yy=Math.round(p.y-top);if(yy>=0&&yy<VH)rect(Math.round(p.x),yy,1,1,p.life>30?7:5);}
+  windSeen=0;
+  for(const w of WINDS){if(w.y1<top||w.y0>top+VH)continue;const on=windOn(w,T),k=(T+w.ph)%w.per,warn=!on&&k>w.per-45;if(on)windSeen=1;
+    if(warn&&k===w.per-45&&scene==='play')inhale();
+    const cnt=on?14:(warn?5:0);for(let i=0;i<cnt;i++){const yy=Math.round(w.y0+h(i,w.y0)*(w.y1-w.y0)-top),sp=on?(2.2+h(i,3)*1.6):0.4,len=on?6+Math.floor(h(i,5)*10):2;
+      const xx=Math.round(((h(i,7)*W+T*sp*w.dir)%W+W)%W);for(let j=0;j<len;j++)rect(((xx-j*w.dir)%W+W)%W,yy,1,1,j<2?7:(on?5:4));}}
+  windSound(scene==='play'?windSeen:0);
   drawPlats(top);
   for(const d of DRIPS){
     if(!d.on){if(--d.wait<=0){d.on=true;d.y=d.sy;d.vy=0;}}
@@ -621,16 +642,43 @@ function drawIntroFrog(top){
   const c=SPR.idle['1'];ctx.imageSmoothingEnabled=false;ctx.drawImage(c,Math.round(fx+5-sw/2),fy-Math.round(24*ky),sw,shh);
   if(((frame/7)|0)%34===0){rect(fx+7,fy-10,3,2,7);}
 }
+function fmtT(f){const s2=Math.floor(f/60),m=Math.floor(s2/60);return m+'분 '+String(s2%60).padStart(2,'0')+'초';}
 const LOCKSVG='<svg viewBox="0 0 16 16" width="10" height="10" aria-hidden="true"><rect x="3" y="7" width="10" height="7" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
 function mapGeom(){const top=24,bottom=VH-Math.ceil(6+52/UNIT),zh=(bottom-(top+12))/5;return{top,bottom,zh,x0:36,x1:104,band:k=>top+12+(5-k)*zh};}
-function mapY(wy){const G=mapGeom(),z=zoneOf(wy),loc=Math.max(0,Math.min(1440,wy-(3-z)*1440));return G.band(z)+loc/1440*G.zh;}
+function mapY(wy){const G=mapGeom(),z=zoneOf(wy),loc=Math.max(0,Math.min(1440,wy-(5-z)*1440));return G.band(z)+loc/1440*G.zh;}
 let mapDirty=true,UNIT=2;
+let endT=0,endBG=null;
+function mix(a,b,t){const A=parseInt(a.slice(1),16),B2=parseInt(b.slice(1),16);const r=Math.round(((A>>16)&255)*(1-t)+((B2>>16)&255)*t),g=Math.round(((A>>8)&255)*(1-t)+((B2>>8)&255)*t),bl=Math.round((A&255)*(1-t)+(B2&255)*t);return`rgb(${r},${g},${bl})`;}
+function buildEnd(){const c=document.createElement('canvas');c.width=W;c.height=VH;const g=c.getContext('2d');const hz=Math.round(VH*0.58),wy=VH-52;
+  const SK=['#b9d2e8','#cddff0','#e1ecf5','#f2f6fa','#ffffff'];
+  for(let y=0;y<hz;y++)for(let x=0;x<W;x++){const t=y/hz*(SK.length-1.01),i=Math.floor(t),f=t-i;g.fillStyle=SK[f>(BAY[y&3][x&3]+0.5)/16?i+1:i];g.fillRect(x,y,1,1);}
+  for(let x=0;x<W;x++){const a=Math.round(hz-10-Math.sin(x*0.035+1)*7-Math.sin(x*0.09)*3),b=Math.round(hz-3-Math.sin(x*0.05+3)*4);
+    for(let y=a;y<hz+2;y++){g.fillStyle=P[y<b?6:5];g.fillRect(x,y,1,1);}}
+  for(let y=hz;y<VH;y++)for(let x=0;x<W;x++){const v=0.42+(y-hz)/(VH-hz)*0.14+(h(x>>1,y)-0.5)*0.12;g.fillStyle=P[q(v,x,y,3,7)];g.fillRect(x,y,1,1);}
+  for(let i=0;i<70;i++){const x=Math.floor(h(i,1)*W),y=hz+4+Math.floor(h(i,2)*(VH-hz-6)),n=2+Math.floor((y-hz)/30);for(let k=0;k<n;k++){g.fillStyle=P[6];g.fillRect(x+k-1,y-k,1,1);g.fillStyle=P[7];g.fillRect(x-k+1,y-k-1,1,1);}}
+  const cx=90,rx=30,ry=8;
+  for(let y=wy;y<wy+20;y++)for(let x=cx-rx;x<=cx+rx;x++){const r=Math.floor((y-wy)/5),bx=Math.floor((x+(r%2)*5)/10),mort=(y-wy)%5===0||((x+(r%2)*5)%10===0);const e=(x-cx)/rx;let v=(mort?0.25:0.55+h(bx,r)*0.15)*(0.75+0.25*Math.cos(e*1.4));g.fillStyle=P[q(v,x,y,2,7)];g.fillRect(x,y,1,1);}
+  for(let y=wy-ry-2;y<=wy+ry;y++)for(let x=cx-rx-2;x<=cx+rx+2;x++){const e=((x-cx)/(rx+2))**2+((y-wy)/(ry+2))**2,ei=((x-cx)/(rx-6))**2+((y-wy)/(ry-2.5))**2;if(e<=1){let i=ei<=1?0:(y<wy?7:5);if(ei>1&&((x+y)%9===0))i=4;g.fillStyle=P[i];g.fillRect(x,y,1,1);}}
+  g.fillStyle=P[2];g.fillRect(cx-rx,wy+20,rx*2+1,2);
+  endBG={c,hz,wy,cx};}
+function drawEnding(){if(!endBG||endBG.c.height!==VH)buildEnd();const E2=endBG;endT++;ctx.drawImage(E2.c,0,0);
+  for(let i=0;i<4;i++){const cx=((h(i,40)*W+endT*(0.06+i*0.02))%(W+60))-30,cy=12+i*14+h(i,41)*8;
+    for(const [ox,oy,r] of[[0,0,7],[8,-3,9],[17,0,7],[8,3,6]])for(let y=-r;y<=r;y++)for(let x=-r;x<=r;x++){if(x*x+y*y<=r*r){const X=Math.round(cx+ox+x),Y=Math.round(cy+oy+y);if(X<0||X>=W)continue;ctx.fillStyle=y>r*0.35?'#e6edf3':'#ffffff';ctx.fillRect(X,Y,1,1);}}}
+  for(let i=0;i<3;i++){const bx=((endT*0.4+i*50)%(W+40))-20,by=30+i*9+Math.sin(endT*0.08+i)*2,w=(endT>>3)%2;ctx.fillStyle=P[3];ctx.fillRect(Math.round(bx)-2,Math.round(by)-w,2,1);ctx.fillRect(Math.round(bx)+1,Math.round(by)-w,2,1);ctx.fillRect(Math.round(bx),Math.round(by),1,1);}
+  const t0=40,t1=86,gy=E2.wy+30;let fx,fy,spr='idle',face=1;
+  if(endT<t0){fx=E2.cx;fy=E2.wy+2;spr=null;if(endT===t0-8)croak(180,0.12,0.2);}
+  else if(endT<t1){const p=(endT-t0)/(t1-t0);fx=E2.cx+40*p;fy=(E2.wy+2)*(1-p)+gy*p-58*Math.sin(Math.PI*p);spr=p<0.5?'jump':'fall';if(endT===t0)sfx.jump(1);}
+  else{fx=E2.cx+40;fy=gy;face=-1;spr=endT<t1+10?'crouch':'idle';if(endT===t1){sfx.land();puff(0,0,0,0);}}
+  if(spr){const c=SPR[spr][face<0?'-1':'1'];ctx.imageSmoothingEnabled=false;ctx.drawImage(c,Math.round(fx-16),Math.round(fy-24));}
+  if(endT>t1+30&&endT<t1+120&&((endT>>3)&1)){const X=Math.round(fx-1),Y=Math.round(fy-22);ctx.fillStyle=P[0];ctx.fillRect(X,Y,2,5);ctx.fillRect(X,Y+6,2,2);}
+  if(endT===t1+150){sfx.win();showWin();}}
 function setRec(){mapDirty=true;const mz=REC.maxZone||1,G=mapGeom(),cz=S.jumps>0?zoneOf(S.y+PH):1;
   const info={
     1:{st:mz>=2?'통과':(REC.best>0?`최고 ${REC.best}m`:'출발 전'),d:(REC.best>0?`가본 가장 높은 곳 ${REC.best}m`:'아직 출발하지 않았어요')+'\n한 번 시작하면 끝까지 이어지고, 떨어지면 아래 구역까지 굴러떨어져요.'},
     2:{st:mz>=3?'통과':mz>=2?'도착함':'아직 못 감',d:mz>=2?'미끄러운 이끼를 밟아 봤어요':'1구역 꼭대기를 넘으면 나와요'},
-    3:{st:REC.cleared?'탈출함':mz>=3?'도착함':'아직 못 감',d:REC.cleared?`가장 적게 뛴 탈출 ${REC.bestJumps}번`:(mz>=3?'흔들리는 두레박을 타 봤어요':'2구역 꼭대기를 넘으면 나와요')},
-    4:{st:'준비 중',d:'아직 만들고 있는 구역이에요',lock:true},5:{st:'준비 중',d:'아직 만들고 있는 구역이에요',lock:true}};
+    3:{st:mz>=4?'통과':mz>=3?'도착함':'아직 못 감',d:mz>=3?'흔들리는 두레박을 타 봤어요':'2구역 꼭대기를 넘으면 나와요'},
+    4:{st:mz>=5?'통과':mz>=4?'도착함':'아직 못 감',d:mz>=4?'박자 맞춰 부는 바람을 타 봤어요':'3구역 꼭대기를 넘으면 나와요'},
+    5:{st:REC.cleared?'탈출함':mz>=5?'도착함':'아직 못 감',d:REC.cleared?`가장 적게 뛴 탈출 ${REC.bestJumps}번`+(REC.bestTime?` · 가장 빠른 탈출 ${fmtT(REC.bestTime)}`:''):(mz>=5?'빛이 쏟아지는 마지막 구역이에요':'4구역 꼭대기를 넘으면 나와요')}};
   let html='';for(let k=5;k>=1;k--){const i=info[k],cls=['plq'];if(i.lock||k>mz)cls.push('off');if(k===cz&&!i.lock)cls.push('here');
     html+=`<button class="${cls.join(' ')}" style="top:calc(var(--u)*${(G.band(k)+G.zh/2).toFixed(1)});--i:${5-k}" aria-expanded="false"><span class="n">${k}</span><span class="t">${ZONE_NAMES[k]}</span><span class="s">${i.lock?LOCKSVG:''}${i.st}</span><span class="d">${i.d}</span></button>`;}
   const box=document.getElementById('plaques');box.innerHTML=html;
@@ -658,10 +706,7 @@ function buildMap(){const G=mapGeom(),mz=REC.maxZone||1;
    for(const [mx,my] of[[G.x0+6,G.band(1)+G.zh*0.45],[G.x1-8,G.band(1)+G.zh*0.7]]){for(let a=0;a<40;a++){const t=a/40*Math.PI*2,rx=Math.round(mx+Math.cos(t)*6),ry=Math.round(my+Math.sin(t)*4);if((a&1)===0)px(g,rx,ry,4);}
      g.fillStyle=P[8];g.fillRect(Math.round(mx)-2,Math.round(my)-2,5,1);g.fillStyle=P[6];g.fillRect(Math.round(mx),Math.round(my)-1,1,2);}}
   {const y=Math.round(G.band(2)+G.zh*0.55);for(let x=G.x0+20;x<G.x0+40;x++){px(g,x,y,6);px(g,x,y+1,4);if(h(x,7)>0.5)px(g,x,y+2+Math.floor(h(x,9)*3),4);}}
-  for(let k=4;k<=5;k++){const y0=Math.floor(G.band(k)),y1=Math.ceil(G.band(k)+G.zh);for(let y=y0;y<y1;y++)for(let x=G.x0;x<G.x1;x++)if(((x+y)&1)===0)px(o,x,y,y%3?2:1);
-    const lx=Math.round(cx-3),ly=Math.round(G.band(k)+G.zh/2-4);
-    ["..xxx..",".x...x.",".x...x.","xxxxxxx","xxx.xxx","xxx.xxx","xxxxxxx"].forEach((r,j)=>[...r].forEach((ch,i)=>{if(ch==='x')px(o,lx+i,ly+j,j<3?6:5);else if(j>=3)px(o,lx+i,ly+j,1);}));}
-  for(let k=mz+1;k<=3;k++){const y0=Math.floor(G.band(k)),y1=Math.ceil(G.band(k)+G.zh);for(let y=y0;y<y1;y++)for(let x=G.x0;x<G.x1;x++)if((x+y)%2===0)px(o,x,y,0);}
+  for(let k=mz+1;k<=5;k++){const y0=Math.floor(G.band(k)),y1=Math.ceil(G.band(k)+G.zh);for(let y=y0;y<y1;y++)for(let x=G.x0;x<G.x1;x++)if((x+y)%2===0)px(o,x,y,0);}
   if(REC.best>0){const ytop=Math.round(mapY(FLOOR-REC.best*10)),yb=Math.round(G.bottom-6);
     for(let y=ytop;y<yb;y++){if(y%4<2){px(o,G.x0+2,y,8);}else if(y%4===2)px(o,G.x0+3,y,7);}
     for(let i=0;i<5;i++){px(o,G.x0+i,ytop-2+i-2,8);px(o,G.x0+4-i,ytop-2+i-2,8);}}
@@ -692,8 +737,8 @@ document.getElementById('cont').addEventListener('click',()=>{audio();transition
 document.getElementById('newg').addEventListener('click',()=>{audio();transition(()=>{fresh();try{localStorage.removeItem(KEY);markDirty();}catch(e){}parts.length=0;REC.runs++;saveRec();play();});});
 document.getElementById('mapBtn').addEventListener('click',()=>{if(scene==='play'){if(S.grounded)save();}humStop();S.charging=false;transition(toMap);});
 document.getElementById('toMap').addEventListener('click',()=>{transition(toMap);});
-function showWin(){flash=1;REC.cleared=true;REC.bestJumps=REC.bestJumps?Math.min(REC.bestJumps,S.jumps):S.jumps;REC.best=Math.max(REC.best,S.best);saveRec();try{localStorage.removeItem(KEY);markDirty();}catch(e){}
-  document.getElementById('winText').textContent=`점프 ${S.jumps}번, 철퍼덕 ${S.falls}번 만에 올라왔어요.`;document.getElementById('win').hidden=false;}
+function showWin(){REC.cleared=true;REC.maxZone=5;REC.bestTime=REC.bestTime?Math.min(REC.bestTime,S.pt||0):(S.pt||0);REC.bestJumps=REC.bestJumps?Math.min(REC.bestJumps,S.jumps):S.jumps;REC.best=Math.max(REC.best,S.best);saveRec();try{localStorage.removeItem(KEY);markDirty();}catch(e){}
+  document.getElementById('winText').textContent=`점프 ${S.jumps}번, 철퍼덕 ${S.falls}번, ${fmtT(S.pt||0)} 만에 처음으로 하늘을 봤어요.`;document.getElementById('win').hidden=false;}
 function restart(){fresh();try{localStorage.removeItem(KEY);markDirty();}catch(e){}document.getElementById('win').hidden=true;parts.length=0;if(scene!=='play')play();}
 document.getElementById('again').addEventListener('click',()=>transition(restart));
 const rb=document.getElementById('reset');let armed=0;
