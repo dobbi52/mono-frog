@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#0b0b0c">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;height:100%}body{margin:0;font:14px system-ui,sans-serif}[hidden]{display:none!important}</style>
 <title>MONO FROG</title>
@@ -17,7 +17,9 @@
   --sans:"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",system-ui,sans-serif;
   color-scheme:dark;
 }
-html,body{height:100%}
+html,body{height:100%;touch-action:manipulation;-webkit-text-size-adjust:100%}
+*{-webkit-touch-callout:none}
+button,.stage,.screen{touch-action:manipulation}
 body{background:var(--bg);color:var(--ink);font-family:var(--sans);display:flex;flex-direction:column;overflow:hidden;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:6px;box-sizing:border-box;
   -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
@@ -839,6 +841,11 @@ function initCloud(){if(!CLOUD.host)return;
   }).catch(()=>{CLOUD.msg='로그인 기능을 불러오지 못했어요';renderAccount();});
   document.addEventListener('visibilitychange',()=>{if(!document.hidden&&CLOUD.ref)syncNow();});
   window.addEventListener('online',()=>{if(CLOUD.ref)pushNow();});}
+/* 두 번 톡톡 눌러 확대되거나 두 손가락으로 확대되지 않게 */
+document.addEventListener('dblclick',e=>e.preventDefault(),{passive:false});
+['gesturestart','gesturechange'].forEach(t=>document.addEventListener(t,e=>e.preventDefault(),{passive:false}));
+{let lastTouch=0;document.addEventListener('touchend',e=>{const n=Date.now();if(n-lastTouch<320&&!(e.target.closest&&e.target.closest('input,textarea')))e.preventDefault();lastTouch=n;},{passive:false});}
+document.addEventListener('touchmove',e=>{if(e.touches&&e.touches.length>1)e.preventDefault();},{passive:false});
 fit();hud();requestAnimationFrame(loop);initCloud();
 if(S.won)S.won=false;
 </script>
