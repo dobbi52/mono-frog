@@ -57,6 +57,10 @@ canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;touch
 .plq.open .d{display:block}
 .plq.off .t{color:var(--mute)}
 .plq.here{border-color:var(--ink)}
+.acc{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--ink);background:rgba(0,0,0,.65);padding:4px 8px;max-width:100%}
+.acc span{display:flex;flex-direction:column;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.acc em{font-style:normal;color:var(--mute)}
+.acc button{font-size:11px;padding:5px 9px;border-radius:0;flex:none}
 .mfoot{display:flex;flex-direction:column;align-items:center;gap:6px;width:100%}
 #mapNote{font-size:max(10px,calc(var(--u)*4.4));background:rgba(0,0,0,.6);padding:2px 8px;max-width:none}
 .acts{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
@@ -114,8 +118,14 @@ button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
       <div id="plaques"></div>
       <div class="mfoot">
         <p id="mapNote">한 번 시작하면 끝까지 이어져요. 이름표를 누르면 기록이 보여요.</p>
+        <div class="acc" id="acc" hidden></div>
         <div class="acts"><button id="cont" class="main">이어하기</button><button id="newg">처음부터</button></div>
       </div>
+    </div>
+    <div class="overlay" id="pick" hidden>
+      <h2>어느 판으로 할까요?</h2>
+      <p id="pickText" style="white-space:pre-line"></p>
+      <div class="acts"><button id="pickLocal" class="main">이 기기 판</button><button id="pickRemote">다른 기기 판</button></div>
     </div>
     <div class="overlay" id="win" hidden>
       <h2>3구역 탈출!</h2>
@@ -354,8 +364,8 @@ function drawFx(){
     if(p>0)drawCover(Math.round(p*64),'#000000');}}
 const RKEY='monofrog-rec-v1';let REC={best:0,cleared:false,bestJumps:0,bestFalls:0,runs:0};
 try{const r=JSON.parse(localStorage.getItem(RKEY)||'null');if(r)Object.assign(REC,r);}catch(e){}
-function saveRec(){try{localStorage.setItem(RKEY,JSON.stringify(REC));}catch(e){}}
-function save(){try{localStorage.setItem(KEY,JSON.stringify({x:S.x,y:S.y,chalks:S.chalks,jumps:S.jumps,falls:S.falls,best:S.best,lastFeet:S.lastFeet,lastX:S.lastX}));}catch(e){}}
+function saveRec(){try{localStorage.setItem(RKEY,JSON.stringify(REC));}catch(e){}markDirty();}
+function save(){try{localStorage.setItem(KEY,JSON.stringify({x:S.x,y:S.y,chalks:S.chalks,jumps:S.jumps,falls:S.falls,best:S.best,lastFeet:S.lastFeet,lastX:S.lastX}));}catch(e){}markDirty();}
 function load(){try{const d=JSON.parse(localStorage.getItem(KEY)||'null');if(d&&typeof d.x==='number'){Object.assign(S,d);S.grounded=true;S.state='idle';S.vx=S.vy=0;}}catch(e){}}
 load();S.sq=0;S.sqv=0;S.face=S.face===-1?-1:1;S.moving=false;S.walk=S.walk||0;
 let freeze=0,shake=0;
@@ -607,19 +617,20 @@ function drawMap(){if(mapDirty||!mapBase||mapBase.height!==VH)buildMap();const G
   if(((frame>>3)%4)===0){rect(fx-1,fy-18-bob,1,1,8);rect(fx-2,fy-17-bob,3,1,8);}
 }
 function toMap(){scene='map';document.getElementById('intro').hidden=true;document.getElementById('win').hidden=true;
-  if(S.won){fresh();try{localStorage.removeItem(KEY);}catch(e){}}
+  if(S.won){fresh();try{localStorage.removeItem(KEY);markDirty();}catch(e){}}
   const has=S.jumps>0;document.getElementById('cont').hidden=!has;document.getElementById('newg').textContent=has?'처음부터':'시작하기';
   document.getElementById('newg').classList.toggle('main',!has);
-  setRec();document.getElementById('map').hidden=false;try{croak(190,0.1,0.16);}catch(e){}}
+  setRec();document.getElementById('map').hidden=false;try{croak(190,0.1,0.16);}catch(e){}renderAccount();
+  if(CLOUD.pending){if(CLOUD.pending.auto){const p=CLOUD.pending;CLOUD.pending=null;adoptRun(p.run);setMeta({last:p.at,dirty:false});}else showPick();}}
 function play(){scene='play';lastZone=0;camTop=-1;document.getElementById('map').hidden=true;prevJump=true;In.jump=false;In.left=In.right=false;}
 document.getElementById('intro').addEventListener('pointerdown',e=>{e.preventDefault();audio();transition(toMap,18);});
 document.getElementById('cont').addEventListener('click',()=>{audio();transition(play);});
-document.getElementById('newg').addEventListener('click',()=>{audio();transition(()=>{fresh();try{localStorage.removeItem(KEY);}catch(e){}parts.length=0;REC.runs++;saveRec();play();});});
+document.getElementById('newg').addEventListener('click',()=>{audio();transition(()=>{fresh();try{localStorage.removeItem(KEY);markDirty();}catch(e){}parts.length=0;REC.runs++;saveRec();play();});});
 document.getElementById('mapBtn').addEventListener('click',()=>{if(scene==='play'){if(S.grounded)save();}humStop();S.charging=false;transition(toMap);});
 document.getElementById('toMap').addEventListener('click',()=>{transition(toMap);});
-function showWin(){flash=1;REC.cleared=true;REC.bestJumps=REC.bestJumps?Math.min(REC.bestJumps,S.jumps):S.jumps;REC.best=Math.max(REC.best,S.best);saveRec();try{localStorage.removeItem(KEY);}catch(e){}
+function showWin(){flash=1;REC.cleared=true;REC.bestJumps=REC.bestJumps?Math.min(REC.bestJumps,S.jumps):S.jumps;REC.best=Math.max(REC.best,S.best);saveRec();try{localStorage.removeItem(KEY);markDirty();}catch(e){}
   document.getElementById('winText').textContent=`점프 ${S.jumps}번, 철퍼덕 ${S.falls}번 만에 올라왔어요.`;document.getElementById('win').hidden=false;}
-function restart(){fresh();try{localStorage.removeItem(KEY);}catch(e){}document.getElementById('win').hidden=true;parts.length=0;if(scene!=='play')play();}
+function restart(){fresh();try{localStorage.removeItem(KEY);markDirty();}catch(e){}document.getElementById('win').hidden=true;parts.length=0;if(scene!=='play')play();}
 document.getElementById('again').addEventListener('click',()=>transition(restart));
 const rb=document.getElementById('reset');let armed=0;
 rb.addEventListener('click',()=>{if(Date.now()-armed<2500){restart();rb.classList.remove('armed');rb.title='처음부터';armed=0;}else{armed=Date.now();rb.classList.add('armed');rb.title='한 번 더 누르면 처음부터';rb.setAttribute('aria-label','한 번 더 누르면 처음부터');setTimeout(()=>{if(armed&&Date.now()-armed>=2400){rb.classList.remove('armed');rb.setAttribute('aria-label','처음부터');armed=0;}},2600);}});
@@ -637,7 +648,57 @@ function fit(){const r=stage.getBoundingClientRect(),aw=Math.max(60,r.width-6),a
   const nv=Math.max(240,Math.min(372,Math.round(W*ah/aw)));if(nv!==VH){VH=nv;cv.height=VH;}
   let s=Math.min(aw/W,ah/VH);const n=Math.round(s);if(Math.abs(s-n)<0.08&&n>=1)s=n;s=Math.max(0.5,s);cv.style.width=Math.round(W*s)+'px';cv.style.height=Math.round(VH*s)+'px';document.getElementById('screen').style.setProperty('--u',s+'px');if(scene==='map')setRec();}
 try{new ResizeObserver(fit).observe(stage);}catch(e){addEventListener('resize',fit);}
-fit();hud();requestAnimationFrame(loop);
+/* ---------- 구글 로그인 + 기기 간 기록 (dobbi52.github.io에서만) ---------- */
+const CLOUD={host:/(^|\.)github\.io$/.test(location.hostname),ok:false,user:null,ref:null,auth:null,msg:'',state:'',timer:0,pending:null};
+const SYNCK='monofrog-sync-v1';
+function syncMeta(){try{return JSON.parse(localStorage.getItem(SYNCK)||'{}')||{};}catch(e){return{};}}
+function setMeta(m){try{localStorage.setItem(SYNCK,JSON.stringify(m));}catch(e){}}
+function markDirty(){const m=syncMeta();if(!m.dirty){m.dirty=true;setMeta(m);}if(CLOUD.ref){clearTimeout(CLOUD.timer);CLOUD.timer=setTimeout(pushNow,1500);}}
+function localRun(){try{return JSON.parse(localStorage.getItem(KEY)||'null');}catch(e){return null;}}
+function runH(r){return r?Math.max(0,Math.round((FLOOR-(r.y+PH))/10)):0;}
+function sameRun(a,b){if(!a&&!b)return true;if(!a||!b)return false;return a.x===b.x&&a.y===b.y&&a.jumps===b.jumps;}
+function pushNow(){if(!CLOUD.ref||CLOUD.pending)return;const at=Date.now();
+  CLOUD.ref.set({savedAt:at,json:JSON.stringify({v:1,rec:REC,run:localRun()})}).then(()=>{setMeta({last:at,dirty:false});CLOUD.state='저장됨';renderAccount();}).catch(()=>{CLOUD.state='저장하지 못했어요';renderAccount();});}
+function mergeRec(r){if(!r)return false;const b=JSON.stringify(REC);REC.best=Math.max(REC.best||0,r.best||0);REC.maxZone=Math.max(REC.maxZone||1,r.maxZone||1);REC.cleared=!!(REC.cleared||r.cleared);
+  const bj=[REC.bestJumps,r.bestJumps].filter(x=>x>0);REC.bestJumps=bj.length?Math.min(...bj):0;REC.runs=Math.max(REC.runs||0,r.runs||0);
+  try{localStorage.setItem(RKEY,JSON.stringify(REC));}catch(e){}return b!==JSON.stringify(REC);}
+function refreshMap(){if(scene!=='map')return;const has=S.jumps>0;document.getElementById('cont').hidden=!has;const n=document.getElementById('newg');n.textContent=has?'처음부터':'시작하기';n.classList.toggle('main',!has);setRec();}
+function adoptRun(d){try{if(d)localStorage.setItem(KEY,JSON.stringify(d));else localStorage.removeItem(KEY);}catch(e){}
+  if(scene!=='play'){fresh();if(d)load();S.sq=0;S.sqv=0;S.face=S.face===-1?-1:1;S.moving=false;S.gp=null;refreshMap();}}
+function showPick(){const p=CLOUD.pending,lo=localRun();if(!p||!lo){if(p){const q=p;CLOUD.pending=null;adoptRun(q.run);setMeta({last:q.at,dirty:false});}return;}
+  document.getElementById('pickText').textContent=`다른 기기에 저장된 판이 있어요.\n이 기기: 높이 ${runH(lo)}m · 점프 ${lo.jumps}번\n다른 기기: 높이 ${runH(p.run)}m · 점프 ${p.run.jumps}번`;
+  document.getElementById('pick').hidden=false;}
+document.getElementById('pickLocal').addEventListener('click',()=>{CLOUD.pending=null;document.getElementById('pick').hidden=true;pushNow();});
+document.getElementById('pickRemote').addEventListener('click',()=>{const p=CLOUD.pending;CLOUD.pending=null;document.getElementById('pick').hidden=true;if(p){adoptRun(p.run);setMeta({last:p.at,dirty:false});}pushNow();});
+function syncNow(){if(!CLOUD.ref)return;CLOUD.ref.once('value').then(sn=>{const v=sn.val();let rm=null;try{rm=v&&v.json?JSON.parse(v.json):null;}catch(e){}
+    if(!rm){pushNow();return;}
+    const meta=syncMeta(),lo=localRun(),recChanged=mergeRec(rm.rec);if(scene==='map')setRec();
+    if(sameRun(lo,rm.run)){if(recChanged||meta.dirty)pushNow();else{setMeta({last:v.savedAt,dirty:false});CLOUD.state='저장됨';renderAccount();}return;}
+    if(v.savedAt===meta.last){pushNow();return;}
+    if(!meta.dirty||!lo){if(scene==='play'){CLOUD.pending={run:rm.run,at:v.savedAt,auto:true};return;}adoptRun(rm.run);setMeta({last:v.savedAt,dirty:recChanged});if(recChanged)pushNow();else{CLOUD.state='저장됨';renderAccount();}return;}
+    if(!rm.run){pushNow();return;}
+    CLOUD.pending={run:rm.run,at:v.savedAt};if(scene!=='play')showPick();
+  }).catch(()=>{CLOUD.state='서버 기록을 확인하지 못했어요';renderAccount();});}
+function renderAccount(){const box=document.getElementById('acc');if(!box)return;if(!CLOUD.host){box.hidden=true;return;}
+  box.innerHTML='';if(!CLOUD.ok&&!CLOUD.msg){box.hidden=true;return;}box.hidden=false;
+  const info=document.createElement('span'),b=document.createElement('button');b.type='button';
+  if(CLOUD.user){info.textContent=CLOUD.user.email||'내 계정';const e=document.createElement('em');e.textContent=CLOUD.state||'로그인됨';info.append(e);b.textContent='로그아웃';b.onclick=()=>CLOUD.auth.signOut();box.append(info,b);}
+  else if(CLOUD.ok){info.textContent=CLOUD.msg||'로그인하면 다른 기기에서도 이어 해요';b.textContent='구글로 로그인';b.onclick=cloudLogin;box.append(info,b);}
+  else{info.textContent=CLOUD.msg;box.append(info);}}
+function cloudErr(e){const c=e&&e.code||'';if(c==='auth/popup-closed-by-user'||c==='auth/cancelled-popup-request')return '';if(c==='auth/network-request-failed')return '인터넷 연결을 확인해 주세요';return '로그인하지 못했어요. 다시 시도해 주세요';}
+function cloudLogin(){CLOUD.msg='';const pv=new firebase.auth.GoogleAuthProvider();CLOUD.auth.signInWithPopup(pv).catch(e=>{const c=e&&e.code||'';
+  if(c==='auth/popup-blocked'||c==='auth/operation-not-supported-in-this-environment'){CLOUD.auth.signInWithRedirect(pv).catch(x=>{CLOUD.msg=cloudErr(x);renderAccount();});return;}CLOUD.msg=cloudErr(e);renderAccount();});}
+function initCloud(){if(!CLOUD.host)return;
+  const ld=u=>new Promise((ok,no)=>{const t=document.createElement('script');t.src=u;t.onload=ok;t.onerror=no;document.head.appendChild(t);}),base='https://www.gstatic.com/firebasejs/10.14.1/';
+  ld(base+'firebase-app-compat.js').then(()=>ld(base+'firebase-auth-compat.js')).then(()=>ld(base+'firebase-database-compat.js')).then(()=>{
+    firebase.initializeApp({apiKey:'AIzaSyA2tiPv0gCWpFVNov9lvrOk0BkPEapOnHA',authDomain:'quidditch-a8936.firebaseapp.com',databaseURL:'https://quidditch-a8936-default-rtdb.asia-southeast1.firebasedatabase.app',projectId:'quidditch-a8936',appId:'1:535725884129:web:42c812bd4df507eee72da0'});
+    CLOUD.auth=firebase.auth();CLOUD.ok=true;renderAccount();
+    if(CLOUD.auth.getRedirectResult)CLOUD.auth.getRedirectResult().catch(e=>{CLOUD.msg=cloudErr(e);renderAccount();});
+    CLOUD.auth.onAuthStateChanged(u=>{CLOUD.user=u||null;CLOUD.ref=u?firebase.database().ref('games/mono-frog/'+u.uid):null;CLOUD.state='';CLOUD.pending=null;renderAccount();if(u)syncNow();});
+  }).catch(()=>{CLOUD.msg='로그인 기능을 불러오지 못했어요';renderAccount();});
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&CLOUD.ref)syncNow();});
+  window.addEventListener('online',()=>{if(CLOUD.ref)pushNow();});}
+fit();hud();requestAnimationFrame(loop);initCloud();
 if(S.won)S.won=false;
 </script>
 </body>
