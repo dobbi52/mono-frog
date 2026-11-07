@@ -233,6 +233,34 @@ function propShroom(g,x,y,seed){const n=2+Math.floor(h(seed,9)*2);for(let i=0;i<
   for(let k=0;k<hh;k++)gp(g,ox,y-k,6);g.fillStyle=P[8];g.fillRect(ox-(cw>>1),y-hh-1,cw,1);g.fillStyle=P[7];g.fillRect(ox-(cw>>1),y-hh,cw,1);if(big){g.fillStyle=P[8];g.fillRect(ox-1,y-hh-2,3,1);gp(g,ox-2,y-hh,6);gp(g,ox+2,y-hh,6);}}
   gp(g,x-3,y+1,4);g.fillStyle=P[3];g.fillRect(x-4,y+1,9,1);}
 const PROPS=[['bucket',62,FLOOR-1],['ring',152,7106],['root',0,6940,1,42],['tally',126,6840],['ring',30,6790],['root',W,6596,-1,40],['tally',64,6400],['root',0,6212,1,36],['tally',120,6042],['ring',150,5900],['ring',150,5610],['ring',20,5380],['root',W,5520,-1,40],['root',0,5120,1,44],['root',W,4740,-1,36],['tally',100,5010],['beam',0,4210,60],['beam',W,3880,-50],['beam',0,3480,55],['beam',W,3180,-45],['rope',30,4030,40],['rope',160,3660,55],['rope',70,3130,30],['tally',120,3330],['ring',20,3830],['ring',150,2600],['tally',30,2300],['rope',160,2050,40],['ring',20,1700],['tally',120,1200],['rope',40,900,30]];
+/* ---------- zone walls: each zone has its own stonework ---------- */
+function z1cell(ci,cj){const cw=((ci%12)+12)%12;return[cw*15+(cj%2)*7+h(cw,cj)*5,cj*11+h(cj,cw)*4,7+h(cw*3,cj)*3];}
+function zPatch(sc){const out=[];for(let k=0;k<2;k++){const w=40+Math.floor(h(sc,20+k)*40),x0=Math.floor(h(sc,30+k)*(W-w)),y0=sc*SH+24+k*110+Math.floor(h(sc,40+k)*60);out.push([x0,y0,w,16]);}return out;}
+const PATCH={};
+function wallV(x,wy,zn,sc){
+  if(zn===1){const ci0=Math.floor(x/15),cj0=Math.floor(wy/11);let best=9,b2=9,c=null;
+    for(let cj=cj0-1;cj<=cj0+1;cj++)for(let ci=ci0-1;ci<=ci0+1;ci++){const p=z1cell(ci,cj);let dx=x-p[0];if(dx>90)dx-=W;if(dx<-90)dx+=W;const d=Math.hypot(dx,(wy-p[1])*1.2)/p[2];if(d<best){b2=best;best=d;c=[dx,wy-p[1],p[2]];}else if(d<b2)b2=d;}
+    if(b2-best<0.13)return[0.2,true];const dx=c[0]/c[2],dy=c[1]/c[2];let v=0.72+0.32*(1-Math.min(1,best))+(-dx-dy)*0.12;if(-dx>0.25&&-dy>0.3&&h(x,wy)>0.62)v+=0.38;return[v,false];}
+  if(zn===2){const r=Math.floor(wy/6),off=(r%2)*4,m0=wy%6===0||(x+off)%9===0;let v=m0?0.3:0.74+h(Math.floor((x+off)/9),r)*0.26;
+    const m=vn(x*0.12,wy*0.1)*0.7+vn(x*0.35,wy*0.3)*0.3;if(m>0.5){const e=Math.min(1,(m-0.5)*5);v=0.62+0.4*e+(h(x,wy*3)>0.8?0.3:0)-(h(x*5,wy)>0.85?0.3:0);return[v,false];}return[v,m0];}
+  if(zn===3){const pp=PATCH[sc]||(PATCH[sc]=zPatch(sc));for(const p of pp){if(x>=p[0]&&x<p[0]+p[2]&&wy>=p[1]&&wy<p[1]+p[3]){const py=wy-p[1];if(py%8===0||x===p[0]||x===p[0]+p[2]-1)return[0.25,true];
+        let v=0.9+(py%8===1?0.22:0)-(py%8===7?0.2:0)+(h(x>>2,wy)>0.78?-0.25:0);return[v,false];}}
+    const r=Math.floor(wy/7),off=(r%2)*8,m0=wy%7===0||(x+off)%16===0;return[m0?0.22:0.76+h(Math.floor((x+off)/16),r)*0.3+(wy%7===1?0.18:0),m0];}
+  if(zn===4){const gi=Math.floor(x/18),gj=Math.floor(wy/18);let v=0.78+vn(x*0.15,wy*0.15)*0.32;
+    for(let j=gj-1;j<=gj+1;j++)for(let i=gi-1;i<=gi+1;i++){const iw=((i%10)+10)%10;if(h(iw,j*3)>0.55)continue;const cx=iw*18+4+h(iw,j)*10,cy=j*18+4+h(j,iw)*10,r=1.6+h(iw*7,j)*2.6;let dx=x-cx;if(dx>90)dx-=W;if(dx<-90)dx+=W;const d=Math.hypot(dx,(wy-cy)*1.3);
+      if(d<r)return[0.08,true];if(d<r+1.2&&wy>cy)v+=0.35;if(d<r+1.2&&wy<cy)v-=0.25;}
+    for(let k=0;k<2;k++){const yb=sc*SH+60+k*120+Math.floor(h(sc,k+50)*40);if(Math.abs(wy-(yb+Math.sin(x*0.3+k)*3+(x%11<2?2:0)))<0.7&&h(x>>4,k+sc)>0.35)return[0.1,true];}
+    return[v,false];}
+  const r=Math.floor(wy/12),off=(r%2)*10,m0=wy%12===0||(x+off)%22===0;let v=m0?0.6:0.86+h(Math.floor((x+off)/22),r)*0.14;
+  for(const[bx,sl]of[[20,0.4],[95,0.3],[150,0.45]]){const d=Math.abs(x-bx-(wy%SH)*sl*0.3);if(d<6)v+=0.22*(1-d/6);}return[v,m0];}
+function zoneDecor(g,sc){const y0=sc*SH,y1=y0+SH;
+  for(let i=0;i<14;i++){const x=Math.floor(h(sc*31+i,3)*W),y=y0+Math.floor(h(sc*31+i,4)*SH),z=zoneOf(y);
+    if(z===1){for(let k=0;k<8+h(i,5)*16;k++)if(k%3)gp(g,x,y+k,4);}
+    if(z===2&&i<7){const len=24+h(sc,i)*40;for(let k=0;k<len;k++){const xx=Math.round(x+Math.sin(k*0.25+i)*2);gp(g,xx,y+k,k%2?4:3);if(k%6===3){gp(g,xx+1,y+k,6);gp(g,xx+2,y+k,6);gp(g,xx+2,y+k-1,5);}if(k%6===0){gp(g,xx-1,y+k,5);gp(g,xx-2,y+k,5);}}}}
+  if(zoneOf(y0+SH/2)===3){for(const p of(PATCH[sc]||(PATCH[sc]=zPatch(sc)))){for(const[ox,oy]of[[2,3],[p[2]-3,3],[2,11],[p[2]-3,11]])gp(g,p[0]+ox,p[1]+oy,8);}
+    const cx=10+Math.floor(h(sc,60)*160),len=40+Math.floor(h(sc,61)*50);for(let y=0;y<len;y++){const lk=y%4;gp(g,cx,y0+y,lk<2?5:3);if(lk===1){gp(g,cx-1,y0+y,4);gp(g,cx+1,y0+y,3);}}}
+  if(zoneOf(y0+SH/2)===5&&y0<1000){for(let k=0;k<3;k++){const x=10+Math.floor(h(sc,70+k)*150),y=y0+20+Math.floor(h(sc,80+k)*180),w=3+Math.floor(h(sc,90+k)*4),hh=3+Math.floor(h(sc,95+k)*3);
+      g.fillStyle=P[5];g.fillRect(x-1,y-1,w+2,hh+2);g.fillStyle='#cfe0ee';g.fillRect(x,y,w,hh);g.fillStyle='#e8f0f7';g.fillRect(x,y,w,1);}}}
 const BG=new Array(NS).fill(null);
 function buildBG(s){
   const c=document.createElement('canvas');c.width=W;c.height=SH;const g=c.getContext('2d');const img=g.createImageData(W,SH);
@@ -240,22 +268,10 @@ function buildBG(s){
     const wy=s*SH+y,t=wy/WH;
     const cyl=0.26+0.74*Math.pow(Math.sin((x+0.5)/W*Math.PI),0.8);
     const hl=0.17+0.56*Math.pow(1-t,1.7);
-    const B_=BANDS[bandOf[wy]],ly=wy-B_.y,sh=B_.hg;let st=B_.st[0];
-    for(const z of B_.st)if(x>=z[0]&&x<z[0]+z[1]){st=z;break;}
-    const lx=x-st[0],sw=st[1],id=st[2];
-    const mort=ly===0||lx===0||((ly===1||ly===sh-1)&&(lx===1||lx===sw-1));
-    let sv=0.7+h(B_.b,id*13)*0.34;
-    if(!mort){
-      if(ly===1)sv+=0.24;else if(ly===2)sv+=0.1;
-      if(ly===sh-1)sv-=0.3;else if(ly===sh-2)sv-=0.08;
-      if(lx===1)sv+=0.08;if(lx===sw-1)sv-=0.2;
-      if(h(x*3,wy*5)>0.93)sv-=0.24;
-      if(h(B_.b,id)>0.82&&lx===Math.floor(sw*0.4)+(ly>>1))sv=0.32;
-    }
-    const zn=zoneOf(wy);
-    let v=hl*cyl*(mort?0.2:sv);
-    if(zn===2){const mn=vn(x*0.08,wy*0.06)*0.7+vn(x*0.23,wy*0.19)*0.3;if(mn>0.56){const e=Math.min(1,(mn-0.56)*6);v=hl*cyl*(0.38+0.42*h(x*7+1,wy*3)*e+(h(x,wy*5)>0.85?0.25:0));}}
-    if(zn===3&&!mort)v*=1.06;
+    const zn=zoneOf(wy);let mort=false,sv;
+    {const r=wallV(x,wy,zn,s);sv=r[0];mort=r[1];}
+    let v=hl*cyl*sv;
+    const cb=[1440,2880,4320,5760].find(b=>Math.abs(wy-b)<=3);if(cb!==undefined){v=[0.08,0.62,0.5,0.4,0.3,0.18,0.06][wy-cb+3]*(0.55+0.45*cyl);mort=true;}
     if(zn===5){const e=1-wy/1440;v=v*(1-0.55*e)+0.62*e*e+0.18*e;}
     for(const w of WINDS){const cy=(w.y0+w.y1)/2,hx=w.dir>0?2:W-3;const d=((x-hx)/7)**2+((wy-cy)/9)**2;if(d<1)v=d<0.6?0.03:0.25;}
     for(const m of SHROOMS){if(Math.abs(wy-m[1])>28||Math.abs(x-m[0])>30)continue;const dd=Math.hypot(x-m[0],(wy-m[1])*1.15);if(dd<30){const f=1-dd/30;v+=0.34*f*f*(mort?0.6:1);}}
@@ -270,6 +286,7 @@ function buildBG(s){
   for(const p of PROPS){if(p[2]<s*SH-20||p[2]>s*SH+SH+20)continue;
     if(p[0]==='ring')propRing(g,p[1],p[2]);if(p[0]==='root')propRoot(g,p[1],p[2],p[3],p[4]);
     if(p[0]==='tally')propTally(g,p[1],p[2]);if(p[0]==='bucket')propBucket(g,p[1],p[2]);if(p[0]==='beam')propBeam(g,p[1],p[2],p[3]);if(p[0]==='rope')propRope(g,p[1],p[2],p[3]);}
+  zoneDecor(g,s);
   SHROOMS.forEach((m,i)=>{if(m[1]>=s*SH-10&&m[1]<s*SH+SH+10)propShroom(g,m[0],m[1],i);});
   g.restore();BG[s]=c;return c;
 }
@@ -278,14 +295,17 @@ function getBG(s){return BG[s]||buildBG(s);}
 /* ledges: pre-rendered stone shelves / wooden planks with a cast shadow on the wall */
 function makeLedge(p,i){
   const w=p.w,hh=p.h,M=2,floor=p.tag==='floor',wood=p.tag==='wood',swing=p.tag==='swing',moss=p.tag==='moss';
-  const c=document.createElement('canvas');c.width=w+5;c.height=hh+M+9;const g=c.getContext('2d');
+  const c=document.createElement('canvas');c.width=w+5;c.height=hh+M+(moss?18:9);const g=c.getContext('2d');
   const put=(x,y,v,lo)=>{g.fillStyle=P[q(v,x,y,lo||2,8)];g.fillRect(x,y,1,1);};
   if(!floor&&!swing){g.fillStyle=P[0];for(let y=0;y<8;y++){const dens=y===0?1:(1-y/8)*0.8;for(let x=1+Math.floor(y*0.4);x<w+2+Math.floor(y*0.3);x++)if((BAY[y&3][x&3]+0.5)/16<dens)g.fillRect(x,M+hh+y,1,1);}}
+  if(swing){for(let ly=0;ly<hh;ly++)for(let x=0;x<w;x++){let v=ly===0?0.66:ly===hh-1?0.12:0.32+(h(x>>2,ly+i)-0.5)*0.08;if(ly>0&&ly<hh-1&&(x%6===3))v=0.22;if(x===0||x===w-1)v-=0.1;put(x,M+ly,v,1);}
+    for(const rx of[1,w-3]){g.fillStyle=P[6];g.fillRect(rx,M-1,2,2);g.fillStyle=P[2];g.fillRect(rx,M+1,2,1);}return c;}
+  if(p.tag==='block'){for(let ly=0;ly<hh;ly++)for(let x=0;x<w;x++){let v=x===0?0.86:x===w-1?0.2:(x%3===1?0.5:0.68);if(ly===0)v=1;else if(ly===1)v=0.86;if(ly%10===0&&ly>1)v=0.3;put(x,M+ly,v,1);}return c;}
   if(wood||swing){
     for(let ly=0;ly<hh;ly++)for(let x=0;x<w;x++){
       if((x<2||x>w-3)&&ly>1&&h(x+i*31,ly)>0.45)continue;
       if((x===0||x===w-1)&&ly===0)continue;
-      let v=ly===0?0.9:ly===1?0.74:0.5+(h(x>>2,ly+i)-0.5)*0.1-(ly/hh)*0.1;
+      let v=ly===0?0.95:ly===1?0.8:0.6+(h(x>>2,ly+i)-0.5)*0.1-(ly/hh)*0.1;
       if(ly>1&&h((x+i*3)>>2,ly*7)>0.82)v=0.34;
       if(ly===hh-1)v=0.26;
       if(x===(w>>1)&&ly>0)v=0.28;
@@ -312,9 +332,9 @@ function makeLedge(p,i){
   if(!floor&&h(i,77)>0.45){const left=h(i,78)>0.5;
     for(let k=0;k<6;k++){const x=left?k:w-1-k;if(h(x,i*3)>0.3){g.fillStyle=P[5];g.fillRect(x,M,1,1);}g.fillStyle=P[4];g.fillRect(x,M+1,1,1);
       const n=Math.floor(h(x,i*11)*4);for(let j=0;j<n;j++){g.fillStyle=P[j===n-1?3:4];g.fillRect(x,M+3+j,1,1);}}}
-  if(moss){for(let x=0;x<w;x++){if(h(x,i*5)>0.5){g.fillStyle=P[5];g.fillRect(x,M-1,1,1);}
-      g.fillStyle=P[h(x,i)>0.5?7:6];g.fillRect(x,M,1,1);g.fillStyle=P[5];g.fillRect(x,M+1,1,1);g.fillStyle=P[h(x,i*2)>0.6?5:4];g.fillRect(x,M+2,1,1);
-      if(h(x,i*7)>0.62){const n=1+Math.floor(h(x,i*9)*5);for(let j=0;j<n;j++){g.fillStyle=P[j===n-1?3:4];g.fillRect(x,M+3+j,1,1);}}}}
+  if(moss){for(let x=0;x<w;x++){const tp=Math.round(Math.sin((p.x+x)*0.55)*1.2+Math.sin((p.x+x)*1.3)*0.8);
+      for(let yy=M-2+tp;yy<M+hh+1;yy++){const d=yy-(M-2+tp);let cc=d===0?6:d===1?5:d<4?(h(x,yy+i)>0.5?5:4):(d<8?3:2);if(d>=4&&d<8&&h(x*3,yy+i)>0.7)cc=4;g.fillStyle=P[cc];g.fillRect(x,yy,1,1);}
+      if(h(x,i*7)>0.58){const n=3+Math.floor(h(x,i*9)*10);for(let k=0;k<n;k++){g.fillStyle=P[k===n-1?5:4];g.fillRect(x+(k>5&&h(x,k)>0.5?1:0),M+hh+1+k,1,1);}}}}
   if(!floor&&h(i,55)>0.4){const px=2+Math.floor(h(i,56)*(w-6));g.fillStyle=P[7];g.fillRect(px,M-1,1,1);g.fillStyle=P[5];g.fillRect(px+1,M-1,1,1);}
   return c;
 }
@@ -557,7 +577,10 @@ function drawLedge(p,i,x,top){
       for(let i2=ax+1;i2<ax+b-1;i2++){const w1=Math.sin(i2*0.7+frame*0.05),w2=Math.sin(i2*0.33-frame*0.035);if(w1>0.86)rect(i2,y+4,1,1,4);if(w2>0.9)rect(i2,y+6,1,1,3);}
       if(a===96){for(let k=0;k<14;k++)if(Math.sin(k+frame*0.06)>0.2)rect(ax+20+k,y+5,1,1,5);}}
   }
-  if(p.tag==='exit'){for(let k=0;k<p.w;k+=3)if(((k+frame/8)|0)%4)rect(x+k,y-2,1,1,7);}
+  if(p.tag==='moss'){for(let k=0;k<3;k++){const ix=(Math.floor(frame*0.4)+k*13+p.x)%p.w,tp=Math.round(Math.sin((p.x+ix)*0.55)*1.2+Math.sin((p.x+ix)*1.3)*0.8);rect(x+ix,y-2+tp,1,1,8);if(ix+1<p.w)rect(x+ix+1,y-2+tp,1,1,7);}}
+  if(p.tag==='exit'){for(let k=0;k<p.w;k+=3)if(((k+frame/8)|0)%4)rect(x+k,y-2,1,1,7);
+    for(let yy=Math.max(0,y-80);yy<y-2;yy++){const half=4+(yy-(y-80))*0.12;for(let xx=Math.floor(x+p.w/2-half);xx<x+p.w/2+half;xx++)if((BAY[yy&3][xx&3]+0.5)/16<0.2)rect(xx,yy,1,1,8);}
+    for(let k=0;k<5;k++){const sx=x+((k*11+(frame>>2))%p.w),sy=y-4-((frame+k*20)%30);rect(sx,sy,1,1,8);}}
 }
 function rline(x0,y0,x1,y1){const n=Math.max(1,Math.ceil(Math.max(Math.abs(x1-x0),Math.abs(y1-y0))));for(let k=0;k<=n;k++){const t=k/n,x=Math.round(x0+(x1-x0)*t),y=Math.round(y0+(y1-y0)*t);rect(((x%W)+W)%W,y,1,1,(k>>1)&1?5:4);}}
 function drawPlats(top){
